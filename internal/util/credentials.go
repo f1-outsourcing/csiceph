@@ -29,7 +29,7 @@ const (
 	credAdminID          = "adminID"
 	credAdminKey         = "adminKey"
 	credMonitors         = "monitors"
-	tmpKeyFileLocation   = "/tmp/csi/keys"
+	tmpKeyFileLocation   = "/tmp/csiceph/tmp"
 	tmpKeyFileNamePrefix = "keyfile-"
 )
 
@@ -40,6 +40,10 @@ type Credentials struct {
 }
 
 func storeKey(key string) (string, error) {
+
+	//create path if it does not exist
+	os.MkdirAll(tmpKeyFileLocation, 0700)
+
 	tmpfile, err := ioutil.TempFile(tmpKeyFileLocation, tmpKeyFileNamePrefix)
 	if err != nil {
 		return "", fmt.Errorf("error creating a temporary keyfile: %w", err)
