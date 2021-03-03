@@ -30,7 +30,7 @@ const (
 	defaultCsiSubvolumeGroup = "csi"
 
 	// CsiConfigFile is the location of the CSI config file
-	CsiConfigFile = "/etc/ceph-csi-config/config.json"
+	CsiConfigFile = "/usr/libexec/csi/config.json"
 )
 
 // ClusterInfo strongly typed JSON spec for the below JSON structure.

@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"bytes"
 )
 
 const (
@@ -29,7 +31,7 @@ const (
 	credAdminID          = "adminID"
 	credAdminKey         = "adminKey"
 	credMonitors         = "monitors"
-	tmpKeyFileLocation   = "/tmp/csi/keys"
+	tmpKeyFileLocation   = "/tmp/csiceph/tmp"
 	tmpKeyFileNamePrefix = "keyfile-"
 )
 
@@ -40,6 +42,10 @@ type Credentials struct {
 }
 
 func storeKey(key string) (string, error) {
+
+	//create path if it does not exist
+	os.MkdirAll(tmpKeyFileLocation, 0700)
+
 	tmpfile, err := ioutil.TempFile(tmpKeyFileLocation, tmpKeyFileNamePrefix)
 	if err != nil {
 		return "", fmt.Errorf("error creating a temporary keyfile: %w", err)
@@ -69,22 +75,25 @@ func storeKey(key string) (string, error) {
 }
 
 func newCredentialsFromSecret(idField, keyField string, secrets map[string]string) (*Credentials, error) {
-	var (
-		c  = &Credentials{}
-		ok bool
-	)
+	var c = &Credentials{}
 
-	if len(secrets) == 0 {
+	c = GetUserEnvCredentials()
+	
+	if len(secrets) == 0 && (Credentials{}) == *c {
 		return nil, errors.New("provided secret is empty")
 	}
-	if c.ID, ok = secrets[idField]; !ok {
+
+	uid := secrets[idField]
+	if len(uid) == 0 && len(c.ID) == 0 {
 		return nil, fmt.Errorf("missing ID field '%s' in secrets", idField)
 	}
 
 	key := secrets[keyField]
-	if key == "" {
+	if key == "" && len(c.KeyFile) == 0 {
 		return nil, fmt.Errorf("missing key field '%s' in secrets", keyField)
 	}
+
+	if key == "" { key = c.KeyFile }
 
 	keyFile, err := storeKey(key)
 	if err == nil {
@@ -100,7 +109,32 @@ func (cr *Credentials) DeleteCredentials() {
 	_ = os.Remove(cr.KeyFile)
 }
 
+// f1 edit
+// Get credentials from environment vars
+func GetUserEnvCredentials() (*Credentials) {
+	var c = &Credentials{}
+
+	envuserid := os.Getenv("CSI_DEFUSERID")
+	envuserkey := os.Getenv("CSI_DEFUSERKEY")
+
+	if len(envuserid) > 0 && len(envuserkey) >0 {
+		DefaultLog("Found environment creditials, setting them as a default.")
+		c.ID = envuserid
+		c.KeyFile = envuserkey
+	}
+
+	return c 
+} 
+
 // NewUserCredentials creates new user credentials from secret.
+func createKeyValuePairs(m map[string]string) string {
+    b := new(bytes.Buffer)
+    for key, value := range m {
+        fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
+    }
+    return b.String()
+}
+
 func NewUserCredentials(secrets map[string]string) (*Credentials, error) {
 	return newCredentialsFromSecret(credUserID, credUserKey, secrets)
 }
