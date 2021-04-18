@@ -219,7 +219,8 @@ func appendDeviceTypeAndOptions(cmdArgs []string, isNbd, isThick bool, userOptio
 		// Enable mapping and unmapping images from a non-initial network
 		// namespace (e.g. for Multus CNI).  The network namespace must be
 		// owned by the initial user namespace.
-		cmdArgs = append(cmdArgs, "--options", "noudev")
+		// f1 edit
+		//cmdArgs = append(cmdArgs, "--options", "noudev")
 	}
 	if isThick {
 		// When an image is thick-provisioned, any discard/unmap/trim

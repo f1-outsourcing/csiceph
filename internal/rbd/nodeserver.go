@@ -318,7 +318,7 @@ func (ns *NodeServer) stageTransaction(ctx context.Context, req *csi.NodeStageVo
 
 	if !readOnly {
 		// #nosec - allow anyone to write inside the target path
-		err = os.Chmod(stagingTargetPath, 0777)
+		//err = os.Chmod(stagingTargetPath, 0750)
 	}
 	return transaction, err
 }
